@@ -3,9 +3,9 @@
     <div class="content">
       <t-card>
         <h1>Hello Admin</h1>
-        <t-form ref="form" class="login-form" :data="loginForm" :rules="rules" :colon="true" :label-width="0">
+        <t-form ref="form" class="login-form" :data="loginForm" :rules="rules" :colon="true" :label-width="0" @submit="handleLogin">
           <t-form-item name="username">
-            <t-input v-model="loginForm.username" type=clearable placeholder="请输入用户名">
+            <t-input v-model="loginForm.username" clearable placeholder="请输入用户名">
               <template #prefix-icon>
                 <icon name="desktop"/>
               </template>
@@ -21,7 +21,7 @@
           </t-form-item>
 
           <t-form-item>
-            <t-button theme="primary" type="submit" block>登录</t-button>
+            <t-button theme="primary" type="submit" block :loading="loading">登录</t-button>
           </t-form-item>
         </t-form>
       </t-card>
@@ -30,18 +30,11 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from 'tdesign-vue-next'
-import { reactive } from 'vue';
-
-type LoginForm = {
-  username: string,
-  password: string
-}
-
-const loginForm = reactive<LoginForm>({
-  username: '',
-  password: ''
-})
+import type { TokenRequest } from '@/api/types';
+import { useAppStore } from '@/store';
+import { Icon, MessagePlugin, type SubmitContext } from 'tdesign-vue-next'
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const rules = {
   username: [
@@ -51,6 +44,30 @@ const rules = {
     { required: true, message: '请输入密码', trigger: 'blur' },
   ],
 }
+
+const loginForm = reactive<TokenRequest>({
+  username: '',
+  password: ''
+})
+
+const appStore = useAppStore()
+const loading = ref(false)
+const router = useRouter()
+const handleLogin = async ({ validateResult }: SubmitContext) => {
+  if(validateResult !== true){
+    return
+  }
+  loading.value = true
+  try {
+    await appStore.login(loginForm)
+    await MessagePlugin.success('登录成功')
+    router.push({ name: 'dashboard' })
+  } finally {
+    loading.value = false
+  }
+
+}
+
 
 </script>
 
